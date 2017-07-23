@@ -2,7 +2,7 @@
 const test = require('tap').test;
 const objoin = require('../index.js');
 
-test('logger defaults to console.log', (t) => {
+test('objoin retrieves and adds record to each item in collection', (t) => {
   const posts = [
     { authorId: 'id1', title: 'this is post 1' },
     { authorId: 'id2', title: 'this is post 2' },
@@ -34,7 +34,7 @@ test('logger defaults to console.log', (t) => {
   });
 });
 
-test('logger defaults to console.log', (t) => {
+test('objoin uses caching to avoid re-fetching the same id twice', (t) => {
   const posts = [
     { authorId: 'id1', title: 'this is post 1' },
     { authorId: 'id2', title: 'this is post 2' },
