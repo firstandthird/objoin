@@ -8,7 +8,8 @@ module.exports = (collection, schema, method, callback) => {
   async.each(collection, (collectionItem, eachDone) => {
     // don't reprocess if it's cached:
     if (cache[collectionItem[key]]) {
-      collectionItem[key][property] = cache[collectionItem[key]];
+      collectionItem[property] = cache[collectionItem[key]];
+      return eachDone();
     }
     method(collectionItem[key], (err, fetchedItem) => {
       if (err) {

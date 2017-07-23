@@ -30,7 +30,27 @@ test('logger defaults to console.log', (t) => {
     t.equal(obj[0].author.name, 'bob smith');
     t.equal(obj[1].author.name, 'jane brown');
     t.equal(obj[2].author.name, 'bob smith');
+    t.end();
+  });
+});
 
+test('logger defaults to console.log', (t) => {
+  const posts = [
+    { authorId: 'id1', title: 'this is post 1' },
+    { authorId: 'id2', title: 'this is post 2' },
+    { authorId: 'id1', title: 'this is post 3' }
+  ];
+  const users = {
+    id1: { name: 'bob smith' },
+    id2: { name: 'jane brown' }
+  };
+  let idCalls = 0;
+  objoin(posts, { key: 'authorId', set: 'author' }, (authorId, next) => {
+    idCalls++;
+    next(null, users[authorId]);
+  }, (err, obj) => {
+    t.equal(err, null);
+    t.equal(idCalls, 2);
     t.end();
   });
 });
