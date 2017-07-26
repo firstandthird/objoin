@@ -1,0 +1,24 @@
+{
+  "name": "objoin",
+  "description": "",
+  "version": "0.0.1",
+  "homepage": "https://github.com/firstandthird/objoin",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firstandthird/objoin.git"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "tap test/test.*.js"
+  },
+  "dependencies": {
+    "async": "^2.5.0"
+  },
+  "devDependencies": {
+    "eslint": "3.16.1",
+    "eslint-config-firstandthird": "3.3.0",
+    "eslint-plugin-import": "2.2.0",
+    "tap": "^10.2.0"
+  },
+  "keywords": []
+}
