@@ -17,8 +17,8 @@ module.exports = (collection, schema, method, callback) => {
       }
       cache[collectionItem[key]] = fetchedItem;
       collectionItem[property] = fetchedItem;
+      eachDone();
     });
-    eachDone();
   }, (err) => {
     callback(err, collection);
   });
