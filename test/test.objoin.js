@@ -54,3 +54,22 @@ test('objoin uses caching to avoid re-fetching the same id twice', (t) => {
     t.end();
   });
 });
+
+test('objoin can process one object as well as a list of objects', (t) => {
+  const users = {
+    id1: { name: 'bob smith' },
+    id2: { name: 'jane brown' }
+  };
+  objoin({ authorId: 'id1', title: 'this is post 1' }, { key: 'authorId', set: 'author' }, (authorId, next) => {
+    //authorIds are just unique Ids, so you don't have to fetch the same id multiple times
+    //in this case, it would get called with authorId id1 and id2 (the second id1 would not be called)
+    //normally this would be some call to the db or ajax call
+    next(null, users[authorId]);
+  }, (err, obj) => {
+    t.equal(err, null);
+    t.equal(obj.authorId, 'id1');
+    t.equal(obj.title, 'this is post 1');
+    t.equal(obj.author.name, 'bob smith');
+    t.end();
+  });
+});
