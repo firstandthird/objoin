@@ -12,11 +12,12 @@ test('objoin retrieves and adds record to each item in collection', (t) => {
     id1: { name: 'bob smith' },
     id2: { name: 'jane brown' }
   };
+  const fetchIt = (authorId, next) => next(null, users[authorId]);
   objoin(posts, { key: 'authorId', set: 'author' }, (authorId, next) => {
     //authorIds are just unique Ids, so you don't have to fetch the same id multiple times
     //in this case, it would get called with authorId id1 and id2 (the second id1 would not be called)
     //normally this would be some call to the db or ajax call
-    next(null, users[authorId]);
+    fetchIt(authorId, next);
   }, (err, obj) => {
     t.equal(err, null);
     t.equal(obj[0].authorId, 'id1');
