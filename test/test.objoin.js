@@ -74,3 +74,36 @@ test('objoin can process one object as well as a list of objects', (t) => {
     t.end();
   });
 });
+
+test('"get" option retrieves and adds a specific field from a record to each item in collection', (t) => {
+  const posts = [
+    { authorId: 'id1', title: 'this is post 1' },
+    { authorId: 'id2', title: 'this is post 2' },
+    { authorId: 'id1', title: 'this is post 3' }
+  ];
+  const users = {
+    id1: { name: 'bob smith', occupation: 'cult leader' },
+    id2: { name: 'jane brown', occupation: 'antiques curator' }
+  };
+  const fetchIt = (authorId, next) => next(null, users[authorId]);
+  objoin(posts, { key: 'authorId', set: 'author', get: 'name' }, (authorId, next) => {
+    //authorIds are just unique Ids, so you don't have to fetch the same id multiple times
+    //in this case, it would get called with authorId id1 and id2 (the second id1 would not be called)
+    //normally this would be some call to the db or ajax call
+    fetchIt(authorId, next);
+  }, (err, obj) => {
+    t.equal(err, null);
+    t.equal(obj[0].authorId, 'id1');
+    t.equal(obj[1].authorId, 'id2');
+    t.equal(obj[2].authorId, 'id1');
+
+    t.equal(obj[0].title, 'this is post 1');
+    t.equal(obj[1].title, 'this is post 2');
+    t.equal(obj[2].title, 'this is post 3');
+
+    t.equal(obj[0].author, 'bob smith');
+    t.equal(obj[1].author, 'jane brown');
+    t.equal(obj[2].author, 'bob smith');
+    t.end();
+  });
+});
