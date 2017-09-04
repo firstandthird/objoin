@@ -107,3 +107,51 @@ test('"get" option retrieves and adds a specific field from a record to each ite
     t.end();
   });
 });
+
+test('objoin retrieves and adds record to each item in collection when collection field is a list', (t) => {
+  const posts = [
+    { authors: ['id1', 'id2'], title: 'this is post 1' },
+    { authors: ['id1', 'id3'], title: 'this is post 2' },
+  ];
+  const users = {
+    id1: { name: 'bob smith' },
+    id2: { name: 'jane brown' },
+    id3: { name: 'john doe' }
+  };
+  const fetchIt = (authorId, next) => {
+    next(null, users[authorId]);
+  };
+  objoin(posts, { key: 'authors', set: 'authors', get: 'name' }, (authorId, next) => {
+    fetchIt(authorId, next);
+  }, (err, obj) => {
+    t.equal(err, null);
+    t.equal(obj[0].authors.length, 2);
+    t.equal(obj[1].authors.length, 2);
+    t.equal(obj[0].authors.indexOf('bob smith') !== -1, true);
+    t.equal(obj[1].authors.indexOf('bob smith') !== -1, true);
+    t.equal(obj[1].authors.indexOf('john doe') !== -1, true);
+    t.equal(obj[0].title, 'this is post 1');
+    t.equal(obj[1].title, 'this is post 2');
+    t.end();
+  });
+});
+
+test('objoin retrieves and adds record to a single item when collection field is a list', (t) => {
+  const users = {
+    id1: { name: 'bob smith' },
+    id2: { name: 'jane brown' },
+    id3: { name: 'john doe' }
+  };
+  const fetchIt = (authorId, next) => {
+    next(null, users[authorId]);
+  };
+  objoin({ authors: ['id1', 'id2'], title: 'this is post 1' }, { key: 'authors', set: 'authors', get: 'name' }, (authorId, next) => {
+    fetchIt(authorId, next);
+  }, (err, obj) => {
+    t.equal(err, null);
+    t.equal(obj.authors.length, 2);
+    t.equal(obj.authors.indexOf('bob smith') !== -1, true);
+    t.equal(obj.title, 'this is post 1');
+    t.end();
+  });
+});
