@@ -58,6 +58,15 @@ module.exports = (collection, schema, method, callback) => {
     });
   };
 
+  // apply single or multiple method to a collection item:
+  const apply = (collectionItem, applyDone) => {
+    if (!Array.isArray(collectionItem[key])) {
+      return applySingleMethod(collectionItem, applyDone);
+    }
+    // if the collection item is a list of multiple items:
+    return applyMultipleMethod(collectionItem, applyDone);
+  };
+
   const handleCallback = (err) => {
     if (err) {
       return callback(err);
@@ -67,20 +76,32 @@ module.exports = (collection, schema, method, callback) => {
 
   // if collection was just one item, just process and return it by itself:
   if (!Array.isArray(collection)) {
-    if (!Array.isArray(collection[key])) {
-      return applySingleMethod(collection, handleCallback);
-    }
-    // the collection's field is an array of items to fetch here:
-    return applyMultipleMethod(collection, handleCallback);
+    return apply(collection, handleCallback);
   }
 
-  // otherwise, if collection is multiple items:
-  return async.each(collection, (collectionItem, eachDone) => {
-    // if each field of the collection item is one item:
-    if (!Array.isArray(collectionItem[key])) {
-      return applySingleMethod(collectionItem, eachDone);
+  // otherwise, if collection is multiple items, first
+  // synchronously cache one item for each unique identifier:
+  const keyList = [];
+  const processedItems = [];
+  async.eachSeries(collection, (collectionItem, eachDone) => {
+    const identifier = collectionItem[key];
+    if (keyList.indexOf(identifier) === -1) {
+      keyList.push(identifier);
+      processedItems.push(collectionItem);
+      return apply(collectionItem, eachDone);
     }
-    // if the collection item is a list of multiple items:
-    return applyMultipleMethod(collectionItem, eachDone);
-  }, handleCallback);
+    eachDone();
+  }, (err) => {
+    if (err) {
+      return callback(err);
+    }
+    // then remaining items can be populated asynchronously:
+    async.each(collection, (collectionItem, eachIdentifier) => {
+      // skip previously-processed items:
+      if (processedItems.indexOf(collectionItem) !== -1) {
+        return eachIdentifier();
+      }
+      apply(collectionItem, eachIdentifier);
+    }, handleCallback);
+  });
 };
