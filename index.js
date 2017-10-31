@@ -75,7 +75,7 @@ module.exports = (collection, schema, method, callback) => {
   }
 
   // otherwise, if collection is multiple items:
-  return async.each(collection, (collectionItem, eachDone) => {
+  return async.eachSeries(collection, (collectionItem, eachDone) => {
     // if each field of the collection item is one item:
     if (!Array.isArray(collectionItem[key])) {
       return applySingleMethod(collectionItem, eachDone);
