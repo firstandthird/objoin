@@ -9,8 +9,8 @@ module.exports = async(collection, schema, method) => {
   if (!Array.isArray(collection)) {
     collection = [collection];
   }
+
   // get unique list of keys in the collection:
-  // const uniqueKeys = Array.from(new Set(collection.map(item => item[key])));
   const set = new Set();
   collection.forEach((item) => {
     if (Array.isArray(item[key])) {
@@ -23,29 +23,24 @@ module.exports = async(collection, schema, method) => {
   });
   const uniqueKeys = Array.from(set);
 
+  // get unique list of items needed by the collection:
   const promiseList = [];
-  // get unique item list without blocking::
   uniqueKeys.forEach((itemKey) => {
     promiseList.push(method(itemKey));
   });
   const uniqueItemList = await Promise.all(promiseList);
 
-  // organize them by key:
+  // organize the unique items by key:
   const uniqueItemDict = {};
   for (let i = 0; i < uniqueKeys.length; i++) {
     uniqueItemDict[uniqueKeys[i]] = uniqueItemList[i];
   }
 
-  // set the requested property field:
+  // now set the requested property field using the fetched items:
   collection.forEach((item) => {
-    console.log('item')
-    console.log('item')
-    console.log('item')
-    console.log(item)
     const curKey = item[key];
-    let getProperty = () => get ? uniqueItemDict[curKey][get] : uniqueItemDict[curKey];
     let setProperty = () => {
-      item[property] = getProperty();
+      item[property] = get ? uniqueItemDict[curKey][get] : uniqueItemDict[curKey];
     };
     if (Array.isArray(curKey)) {
       setProperty = () => {
@@ -58,6 +53,5 @@ module.exports = async(collection, schema, method) => {
     }
     setProperty();
   });
-
   return collection;
 };
