@@ -9,8 +9,7 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "test": "tap test/test.*.js",
-    "test-travis": "tap | ./node_modules/.bin/coveralls",
+    "test": "tap test/test.*.js"
   },
   "dependencies": {
     "p-props": "^1.1.0"
