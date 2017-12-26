@@ -1,4 +1,3 @@
-const async = require('async');
 const pprops = require('p-props');
 
 module.exports = async(collection, schema, method) => {
