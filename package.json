@@ -12,7 +12,8 @@
     "test": "tap test/test.*.js"
   },
   "dependencies": {
-    "async": "^2.5.0"
+    "async": "^2.5.0",
+    "p-props": "^1.1.0"
   },
   "devDependencies": {
     "eslint": "^4.13.1",

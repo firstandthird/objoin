@@ -19,17 +19,16 @@ test('objoin retrieves and adds record to each item in collection', async(t) => 
     //normally this would be some call to the db or ajax call
     return fetchIt(authorId);
   });
-  t.equal(obj[0].authorId, 'id1');
-  t.equal(obj[1].authorId, 'id2');
-  t.equal(obj[2].authorId, 'id1');
-
-  t.equal(obj[0].title, 'this is post 1');
-  t.equal(obj[1].title, 'this is post 2');
-  t.equal(obj[2].title, 'this is post 3');
-
-  t.equal(obj[0].author.name, 'bob smith');
-  t.equal(obj[1].author.name, 'jane brown');
-  t.equal(obj[2].author.name, 'bob smith');
+  t.deepEqual(obj, [{ authorId: 'id1',
+    title: 'this is post 1',
+    author: { name: 'bob smith' } },
+  { authorId: 'id2',
+    title: 'this is post 2',
+    author: { name: 'jane brown' } },
+  { authorId: 'id1',
+    title: 'this is post 3',
+    author: { name: 'bob smith' } }
+  ]);
   t.end();
 });
 
@@ -63,9 +62,10 @@ test('objoin can process one object as well as a list of objects', async(t) => {
     //normally this would be some call to the db or ajax call
     return users[authorId];
   });
-  t.equal(obj[0].authorId, 'id1');
-  t.equal(obj[0].title, 'this is post 1');
-  t.equal(obj[0].author.name, 'bob smith');
+  t.deepEqual(obj, [{ authorId: 'id1',
+    title: 'this is post 1',
+    author: { name: 'bob smith' } }
+  ]);
   t.end();
 });
 
@@ -88,17 +88,10 @@ test('"get" option retrieves and adds a specific field from a record to each ite
     await wait(3000);
     return fetchIt(authorId);
   });
-  t.equal(obj[0].authorId, 'id1');
-  t.equal(obj[1].authorId, 'id2');
-  t.equal(obj[2].authorId, 'id1');
-
-  t.equal(obj[0].title, 'this is post 1');
-  t.equal(obj[1].title, 'this is post 2');
-  t.equal(obj[2].title, 'this is post 3');
-
-  t.equal(obj[0].author, 'bob smith');
-  t.equal(obj[1].author, 'jane brown');
-  t.equal(obj[2].author, 'bob smith');
+  t.deepEqual(obj, [{ authorId: 'id1', title: 'this is post 1', author: 'bob smith' },
+    { authorId: 'id2', title: 'this is post 2', author: 'jane brown' },
+    { authorId: 'id1', title: 'this is post 3', author: 'bob smith' }
+  ]);
   t.end();
 });
 
@@ -114,13 +107,8 @@ test('objoin retrieves and adds record to each item in collection when collectio
   };
   const fetchIt = (authorId) => users[authorId];
   const obj = await objoin(posts, { key: 'authors', set: 'authors', get: 'name' }, (authorId) => fetchIt(authorId));
-  t.equal(obj[0].authors.length, 2);
-  t.equal(obj[1].authors.length, 2);
-  t.notEqual(obj[0].authors.indexOf('bob smith'), -1);
-  t.notEqual(obj[1].authors.indexOf('bob smith'), -1);
-  t.notEqual(obj[1].authors.indexOf('john doe'), -1);
-  t.equal(obj[0].title, 'this is post 1');
-  t.equal(obj[1].title, 'this is post 2');
+  t.deepEqual(obj, [{ authors: ['bob smith', 'jane brown'], title: 'this is post 1' },
+    { authors: ['bob smith', 'john doe'], title: 'this is post 2' }]);
   t.end();
 });
 
@@ -132,10 +120,8 @@ test('objoin retrieves and adds record to a single item when collection field is
   };
   const fetchIt = (authorId) => users[authorId];
   const obj = await objoin({ authors: ['id1', 'id2'], title: 'this is post 1' }, { key: 'authors', set: 'authors', get: 'name' }, (authorId) => fetchIt(authorId));
-  t.equal(obj[0].authors.length, 2);
-  t.notEqual(obj[0].authors.indexOf('bob smith'), -1);
-  t.notEqual(obj[0].authors.indexOf('jane brown'), -1);
-  t.equal(obj[0].authors.indexOf('john doe') === -1, true);
-  t.equal(obj[0].title, 'this is post 1');
+  t.deepEqual(obj, [{ authors: ['bob smith', 'jane brown' ],
+    title: 'this is post 1' }
+  ]);
   t.end();
 });

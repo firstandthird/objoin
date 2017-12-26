@@ -1,4 +1,5 @@
 const async = require('async');
+const pprops = require('p-props');
 
 module.exports = async(collection, schema, method) => {
   const key = schema.key;
@@ -11,30 +12,25 @@ module.exports = async(collection, schema, method) => {
   }
 
   // get unique list of keys in the collection:
-  const uniqueKeys = collection.reduce((accumulator, item) => {
+  // organize the unique items by key:
+  const promiseObj = collection.reduce((accumulator, item) => {
     const entry = item[key];
     if (Array.isArray(entry)) {
       entry.forEach((curKey) => {
-        if (accumulator.indexOf(curKey) === -1) {
-          accumulator.push(curKey);
+        if (!accumulator[curKey]) {
+          accumulator[curKey] = method(curKey);
         }
       });
     } else {
-      if (accumulator.indexOf(entry) === -1) {
-        accumulator.push(entry);
+      if (!accumulator[entry]) {
+        accumulator[entry] = method(entry);
       }
     }
     return accumulator;
-  }, []);
+  }, {});
 
   // get unique list of items needed by the collection:
-  const uniqueItemList = await Promise.all(uniqueKeys.map((itemKey) => method(itemKey)));
-
-  // organize the unique items by key:
-  const uniqueItemDict = {};
-  uniqueKeys.forEach((itemKey, i) => {
-    uniqueItemDict[itemKey] = uniqueItemList[i];
-  });
+  const uniqueItemDict = await pprops(promiseObj);
 
   // now set the requested property field using the fetched items:
   collection.forEach((item) => {
