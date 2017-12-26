@@ -2,6 +2,8 @@
 const test = require('tap').test;
 const objoin = require('../index.js');
 
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 test('objoin retrieves and adds record to each item in collection', async(t) => {
   const posts = [
     { authorId: 'id1', title: 'this is post 1' },
@@ -84,7 +86,6 @@ test('"get" option retrieves and adds a specific field from a record to each ite
     //authorIds are just unique Ids, so you don't have to fetch the same id multiple times
     //in this case, it would get called with authorId id1 and id2 (the second id1 would not be called)
     //normally this would be some call to the db or ajax call
-    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     await wait(3000);
     return fetchIt(authorId);
   });
