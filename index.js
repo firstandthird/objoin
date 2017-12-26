@@ -11,47 +11,43 @@ module.exports = async(collection, schema, method) => {
   }
 
   // get unique list of keys in the collection:
-  const set = new Set();
-  collection.forEach((item) => {
-    if (Array.isArray(item[key])) {
-      item[key].forEach((curKey) => {
-        set.add(curKey);
+  const uniqueKeys = collection.reduce((accumulator, item) => {
+    const entry = item[key];
+    if (Array.isArray(entry)) {
+      entry.forEach((curKey) => {
+        if (accumulator.indexOf(curKey) === -1) {
+          accumulator.push(curKey);
+        }
       });
     } else {
-      set.add(item[key]);
+      if (accumulator.indexOf(entry) === -1) {
+        accumulator.push(entry);
+      }
     }
-  });
-  const uniqueKeys = Array.from(set);
+    return accumulator;
+  }, []);
 
   // get unique list of items needed by the collection:
-  const promiseList = [];
-  uniqueKeys.forEach((itemKey) => {
-    promiseList.push(method(itemKey));
-  });
-  const uniqueItemList = await Promise.all(promiseList);
+  const uniqueItemList = await Promise.all(uniqueKeys.map((itemKey) => method(itemKey)));
 
   // organize the unique items by key:
   const uniqueItemDict = {};
-  for (let i = 0; i < uniqueKeys.length; i++) {
-    uniqueItemDict[uniqueKeys[i]] = uniqueItemList[i];
-  }
+  uniqueKeys.forEach((itemKey, i) => {
+    uniqueItemDict[itemKey] = uniqueItemList[i];
+  });
 
   // now set the requested property field using the fetched items:
   collection.forEach((item) => {
     const curKey = item[key];
-    let setProperty = () => {
-      item[property] = get ? uniqueItemDict[curKey][get] : uniqueItemDict[curKey];
-    };
     if (Array.isArray(curKey)) {
-      setProperty = () => {
-        const allValues = [];
-        curKey.forEach((individualKey) => {
-          allValues.push(get ? uniqueItemDict[individualKey][get] : uniqueItemDict[individualKey]);
-        });
-        item[property] = allValues;
-      };
+      const allValues = [];
+      curKey.forEach((individualKey) => {
+        allValues.push(get ? uniqueItemDict[individualKey][get] : uniqueItemDict[individualKey]);
+      });
+      item[property] = allValues;
+    } else {
+      item[property] = get ? uniqueItemDict[curKey][get] : uniqueItemDict[curKey];
     }
-    setProperty();
   });
   return collection;
 };
