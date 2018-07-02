@@ -126,3 +126,108 @@ test('objoin retrieves and adds record to a single item when collection field is
   ]);
   t.end();
 });
+
+test('objoin takes a fallback method to handle errors in the method promise', async(t) => {
+  const posts = [
+    { authorId: 'id1', title: 'this is post 1' },
+    { authorId: 'id2', title: 'this is post 2' },
+    { authorId: 'id1', title: 'this is post 3' }
+  ];
+  const posts2 = [
+    { authors: ['id1', 'id2'], title: 'this is post 1' },
+    { authors: ['id1', 'id3'], title: 'this is post 2' },
+  ];
+
+  const users = {
+    id1: { name: 'bob smith' },
+    id2: { name: 'jane brown' }
+  };
+  const fetchIt = (authorId) => {
+    if (authorId === 'id2') {
+      throw new Error('some error');
+    }
+    return users[authorId];
+  };
+  const fallback = { name: 'clarence smith' };
+  const obj = await objoin(posts, { key: 'authorId', set: 'author', fallback }, (authorId) => fetchIt(authorId));
+  t.deepEqual(obj, [{ authorId: 'id1',
+    title: 'this is post 1',
+    author: { name: 'bob smith' } },
+  { authorId: 'id2',
+    title: 'this is post 2',
+    author: { name: 'clarence smith' } },
+  { authorId: 'id1',
+    title: 'this is post 3',
+    author: { name: 'bob smith' } }]);
+
+  const obj2 = await objoin(posts2, { key: 'authors', set: 'author', get: 'name', fallback }, (authorId) => {
+    throw new Error('an error');
+  });
+  t.deepEqual(obj2, [
+    {
+      authors: ['id1', 'id2'],
+      title: 'this is post 1',
+      author: ['clarence smith', 'clarence smith']
+    },
+    {
+      authors: ['id1', 'id3'],
+      title: 'this is post 2',
+      author: ['clarence smith', 'clarence smith']
+    }
+  ]);
+  const obj3 = await objoin({ authorId: 'id1', title: 'this is post 1' }, { key: 'authorId', set: 'author', fallback }, (authorId) => {
+    throw new Error('no way no way');
+  });
+  t.deepEqual(obj3, [{ authorId: 'id1',
+    title: 'this is post 1',
+    author: { name: 'clarence smith' } }
+  ]);
+  t.end();
+});
+
+test('objoin throws errors if method promise fails', async(t) => {
+  const posts = [
+    { authorId: 'id1', title: 'this is post 1' },
+    { authorId: 'id2', title: 'this is post 2' },
+    { authorId: 'id1', title: 'this is post 3' }
+  ];
+  const posts2 = [
+    { authors: ['id1', 'id2'], title: 'this is post 1' },
+    { authors: ['id1', 'id3'], title: 'this is post 2' },
+  ];
+
+  const users = {
+    id1: { name: 'bob smith' },
+    id2: { name: 'jane brown' }
+  };
+  let errCount = 0;
+  // handle when entries are not lists:
+  try {
+    await objoin(posts, { key: 'authorId', set: 'author' }, (authorId) => {
+      throw new Error('hey hey you you');
+    });
+    t.fail();
+  } catch (e) {
+    errCount++;
+  }
+  // handle when each entry in post is a list
+  try {
+    await objoin(posts2, { key: 'authors', set: 'author', get: 'name' }, (authorId) => {
+      throw new Error('i dont like your girlfriend');
+    });
+    t.fail();
+  } catch (e) {
+    errCount++;
+  }
+  // handle for singular:
+  try {
+    await objoin({ authorId: 'id1', title: 'this is post 1' }, { key: 'authorId', set: 'author' }, (authorId) => {
+      throw new Error('no way no way');
+    });
+    t.fail();
+  } catch (e) {
+    errCount++;
+    t.equal(errCount, 3, 'throws all expected errors');
+    t.end();
+  }
+});
