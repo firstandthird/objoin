@@ -133,6 +133,11 @@ test('objoin takes a fallback method to handle errors in the method promise', as
     { authorId: 'id2', title: 'this is post 2' },
     { authorId: 'id1', title: 'this is post 3' }
   ];
+  const posts2 = [
+    { authors: ['id1', 'id2'], title: 'this is post 1' },
+    { authors: ['id1', 'id3'], title: 'this is post 2' },
+  ];
+
   const users = {
     id1: { name: 'bob smith' },
     id2: { name: 'jane brown' }
@@ -155,10 +160,25 @@ test('objoin takes a fallback method to handle errors in the method promise', as
     title: 'this is post 3',
     author: { name: 'bob smith' } }]);
 
-  const obj2 = await objoin({ authorId: 'id1', title: 'this is post 1' }, { key: 'authorId', set: 'author', fallback }, (authorId) => {
+  const obj2 = await objoin(posts2, { key: 'authors', set: 'author', get: 'name', fallback }, (authorId) => {
+    throw new Error('an error');
+  });
+  t.deepEqual(obj2, [
+    {
+      authors: ['id1', 'id2'],
+      title: 'this is post 1',
+      author: ['clarence smith', 'clarence smith']
+    },
+    {
+      authors: ['id1', 'id3'],
+      title: 'this is post 2',
+      author: ['clarence smith', 'clarence smith']
+    }
+  ]);
+  const obj3 = await objoin({ authorId: 'id1', title: 'this is post 1' }, { key: 'authorId', set: 'author', fallback }, (authorId) => {
     throw new Error('no way no way');
   });
-  t.deepEqual(obj2, [{ authorId: 'id1',
+  t.deepEqual(obj3, [{ authorId: 'id1',
     title: 'this is post 1',
     author: { name: 'clarence smith' } }
   ]);
