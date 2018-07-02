@@ -17,12 +17,28 @@ module.exports = async(collection, schema, method) => {
     if (Array.isArray(entry)) {
       entry.forEach((curKey) => {
         if (!accumulator[curKey]) {
-          accumulator[curKey] = method(curKey);
+          try {
+            accumulator[curKey] = method(curKey);
+          } catch (e) {
+            if (schema.fallback) {
+              accumulator[curKey] = schema.fallback;
+            } else {
+              throw e;
+            }
+          }
         }
       });
     } else {
       if (!accumulator[entry]) {
-        accumulator[entry] = method(entry);
+        try {
+          accumulator[entry] = method(entry);
+        } catch (e) {
+          if (schema.fallback) {
+            accumulator[entry] = schema.fallback;
+          } else {
+            throw e;
+          }
+        }
       }
     }
     return accumulator;
