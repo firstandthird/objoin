@@ -16,7 +16,7 @@ module.exports = async(collection, schema, method, options) => {
   await pMap(collection, async (item) => {
     const entry = item[key];
     if (Array.isArray(entry)) {
-      pMap(entry, async (child) => {
+      await pMap(entry, async (child) => {
         if (!promiseObj[child]) {
           try {
             promiseObj[child] = await method(child);

@@ -45,10 +45,11 @@ test('objoin uses caching to avoid re-fetching the same id twice', async(t) => {
     id2: { name: 'jane brown' }
   };
   let idCalls = 0;
-  const obj = await objoin(posts, { key: 'authorId', set: 'author' }, (authorId) => {
+  const obj = await objoin(posts, { key: 'authorId', set: 'author' }, async (authorId) => {
     idCalls++;
+    wait(100);
     return users[authorId];
-  });
+  }, { concurrency: 1 });
   t.equal(idCalls, 2, 'id fetcher only runs for ids that are not already cached');
   t.end();
 });
