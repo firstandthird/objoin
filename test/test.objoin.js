@@ -196,10 +196,6 @@ test('objoin throws errors if method promise fails', async(t) => {
     { authors: ['id1', 'id3'], title: 'this is post 2' },
   ];
 
-  const users = {
-    id1: { name: 'bob smith' },
-    id2: { name: 'jane brown' }
-  };
   let errCount = 0;
   // handle when entries are not lists:
   try {

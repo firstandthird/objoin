@@ -12,7 +12,7 @@
     "test": "tap test/test.*.js"
   },
   "dependencies": {
-    "p-props": "^1.1.0"
+    "p-map": "^2.0.0"
   },
   "devDependencies": {
     "eslint": "^4.13.1",

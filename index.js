@@ -1,6 +1,6 @@
-const pprops = require('p-props');
+const pMap = require('p-map');
 
-module.exports = async(collection, schema, method) => {
+module.exports = async(collection, schema, method, options) => {
   const key = schema.key;
   const property = schema.set;
   const get = schema.get;
@@ -12,16 +12,17 @@ module.exports = async(collection, schema, method) => {
 
   // get unique list of keys in the collection:
   // organize the unique items by key:
-  const promiseObj = collection.reduce((accumulator, item) => {
+  const promiseObj = {};
+  await pMap(collection, async (item) => {
     const entry = item[key];
     if (Array.isArray(entry)) {
-      entry.forEach((curKey) => {
-        if (!accumulator[curKey]) {
+      pMap(entry, async (child) => {
+        if (!promiseObj[child]) {
           try {
-            accumulator[curKey] = method(curKey);
+            promiseObj[child] = await method(child);
           } catch (e) {
             if (schema.fallback) {
-              accumulator[curKey] = schema.fallback;
+              promiseObj[child] = schema.fallback;
             } else {
               throw e;
             }
@@ -29,23 +30,19 @@ module.exports = async(collection, schema, method) => {
         }
       });
     } else {
-      if (!accumulator[entry]) {
+      if (!promiseObj[entry]) {
         try {
-          accumulator[entry] = method(entry);
+          promiseObj[entry] = await method(entry);
         } catch (e) {
           if (schema.fallback) {
-            accumulator[entry] = schema.fallback;
+            promiseObj[entry] = schema.fallback;
           } else {
             throw e;
           }
         }
       }
     }
-    return accumulator;
-  }, {});
-
-  // get unique list of items needed by the collection:
-  const uniqueItemDict = await pprops(promiseObj);
+  }, options);
 
   // now set the requested property field using the fetched items:
   collection.forEach((item) => {
@@ -53,11 +50,11 @@ module.exports = async(collection, schema, method) => {
     if (Array.isArray(curKey)) {
       const allValues = [];
       curKey.forEach((individualKey) => {
-        allValues.push(get ? uniqueItemDict[individualKey][get] : uniqueItemDict[individualKey]);
+        allValues.push(get ? promiseObj[individualKey][get] : promiseObj[individualKey]);
       });
       item[property] = allValues;
     } else {
-      item[property] = get ? uniqueItemDict[curKey][get] : uniqueItemDict[curKey];
+      item[property] = get ? promiseObj[curKey][get] : promiseObj[curKey];
     }
   });
   return collection;
