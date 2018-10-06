@@ -4,7 +4,6 @@ module.exports = async(collection, schema, method, options) => {
   const key = schema.key;
   const property = schema.set;
   const get = schema.get;
-
   /// make sure collection is an array:
   if (!Array.isArray(collection)) {
     collection = [collection];

@@ -4,6 +4,8 @@ const objoin = require('../index.js');
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+const rint = (l, u) => Math.random() * (u - l) + l;
+
 test('objoin retrieves and adds record to each item in collection', async(t) => {
   const posts = [
     { authorId: 'id1', title: 'this is post 1' },
@@ -15,12 +17,7 @@ test('objoin retrieves and adds record to each item in collection', async(t) => 
     id2: { name: 'jane brown' }
   };
   const fetchIt = (authorId) => users[authorId];
-  const obj = await objoin(posts, { key: 'authorId', set: 'author' }, (authorId) => {
-    //authorIds are just unique Ids, so you don't have to fetch the same id multiple times
-    //in this case, it would get called with authorId id1 and id2 (the second id1 would not be called)
-    //normally this would be some call to the db or ajax call
-    return fetchIt(authorId);
-  });
+  const obj = await objoin(posts, { key: 'authorId', set: 'author' }, (authorId) => fetchIt(authorId));
   t.deepEqual(obj, [{ authorId: 'id1',
     title: 'this is post 1',
     author: { name: 'bob smith' } },
@@ -45,9 +42,9 @@ test('objoin uses caching to avoid re-fetching the same id twice', async(t) => {
     id2: { name: 'jane brown' }
   };
   let idCalls = 0;
-  const obj = await objoin(posts, { key: 'authorId', set: 'author' }, async (authorId) => {
+  await objoin(posts, { key: 'authorId', set: 'author' }, async (authorId) => {
     idCalls++;
-    wait(100);
+    await wait(100);
     return users[authorId];
   }, { concurrency: 1 });
   t.equal(idCalls, 2, 'id fetcher only runs for ids that are not already cached');
@@ -59,12 +56,7 @@ test('objoin can process one object as well as a list of objects', async(t) => {
     id1: { name: 'bob smith' },
     id2: { name: 'jane brown' }
   };
-  const obj = await objoin({ authorId: 'id1', title: 'this is post 1' }, { key: 'authorId', set: 'author' }, (authorId) => {
-    //authorIds are just unique Ids, so you don't have to fetch the same id multiple times
-    //in this case, it would get called with authorId id1 and id2 (the second id1 would not be called)
-    //normally this would be some call to the db or ajax call
-    return users[authorId];
-  });
+  const obj = await objoin({ authorId: 'id1', title: 'this is post 1' }, { key: 'authorId', set: 'author' }, (authorId) => users[authorId]);
   t.deepEqual(obj, [{ authorId: 'id1',
     title: 'this is post 1',
     author: { name: 'bob smith' } }
@@ -122,7 +114,7 @@ test('objoin retrieves and adds record to a single item when collection field is
   };
   const fetchIt = (authorId) => users[authorId];
   const obj = await objoin({ authors: ['id1', 'id2'], title: 'this is post 1' }, { key: 'authors', set: 'authors', get: 'name' }, (authorId) => fetchIt(authorId));
-  t.deepEqual(obj, [{ authors: ['bob smith', 'jane brown' ],
+  t.deepEqual(obj, [{ authors: ['bob smith', 'jane brown'],
     title: 'this is post 1' }
   ]);
   t.end();
@@ -227,4 +219,32 @@ test('objoin throws errors if method promise fails', async(t) => {
     t.equal(errCount, 3, 'throws all expected errors');
     t.end();
   }
+});
+
+test('passing concurrency limits number of promises', async (t) => {
+  let running = 0;
+  const posts = [
+    { authorId: 'id1', title: 'this is post 1' },
+    { authorId: 'id2', title: 'this is post 2' },
+    { authorId: 'id9', title: 'this is post 3' },
+    { authorId: 'id5', title: 'this is post 4' },
+    { authorId: 'id5', title: 'this is post 4' },
+    { authorId: 'id5', title: 'this is post 4' },
+    { authorId: 'id5', title: 'this is post 4' },
+    { authorId: 'id5', title: 'this is post 4' }
+  ];
+
+  try {
+    await objoin(posts, { key: 'authorId', set: 'author' }, async (authId) => {
+      running++;
+      t.true(running <= 3);
+      await wait(rint(40, 50));
+      running--;
+      return `Mister Beauchamp ${authId}`;
+    }, { concurrency: 3 });
+    await wait(5);
+  } catch (e) {
+    t.fail();
+  }
+  t.end();
 });
