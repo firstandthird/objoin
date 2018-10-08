@@ -46,7 +46,7 @@ test('objoin uses caching to avoid re-fetching the same id twice', async(t) => {
     idCalls++;
     await wait(100);
     return users[authorId];
-  }, { concurrency: 1 });
+  });
   t.equal(idCalls, 2, 'id fetcher only runs for ids that are not already cached');
   t.end();
 });
@@ -227,10 +227,10 @@ test('passing concurrency limits number of promises', async (t) => {
     { authorId: 'id1', title: 'this is post 1' },
     { authorId: 'id2', title: 'this is post 2' },
     { authorId: 'id9', title: 'this is post 3' },
-    { authorId: 'id5', title: 'this is post 4' },
-    { authorId: 'id5', title: 'this is post 4' },
-    { authorId: 'id5', title: 'this is post 4' },
-    { authorId: 'id5', title: 'this is post 4' },
+    { authorId: 'id4', title: 'this is post 4' },
+    { authorId: 'id8', title: 'this is post 4' },
+    { authorId: 'id3', title: 'this is post 4' },
+    { authorId: 'id6', title: 'this is post 4' },
     { authorId: 'id5', title: 'this is post 4' }
   ];
 
