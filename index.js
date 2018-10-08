@@ -1,6 +1,6 @@
 const pprops = require('p-props');
 
-module.exports = async(collection, schema, method) => {
+module.exports = async(collection, schema, method, options) => {
   const key = schema.key;
   const property = schema.set;
   const get = schema.get;
@@ -17,27 +17,19 @@ module.exports = async(collection, schema, method) => {
     if (Array.isArray(entry)) {
       entry.forEach((curKey) => {
         if (!accumulator[curKey]) {
-          try {
-            accumulator[curKey] = method(curKey);
-          } catch (e) {
-            if (schema.fallback) {
-              accumulator[curKey] = schema.fallback;
-            } else {
-              throw e;
-            }
+          if (schema.fallback) {
+            accumulator[curKey] = schema.fallback;
+          } else {
+            accumulator[curKey] = null;
           }
         }
       });
     } else {
       if (!accumulator[entry]) {
-        try {
-          accumulator[entry] = method(entry);
-        } catch (e) {
-          if (schema.fallback) {
-            accumulator[entry] = schema.fallback;
-          } else {
-            throw e;
-          }
+        if (schema.fallback) {
+          accumulator[entry] = schema.fallback;
+        } else {
+          accumulator[entry] = null;
         }
       }
     }
@@ -45,7 +37,20 @@ module.exports = async(collection, schema, method) => {
   }, {});
 
   // get unique list of items needed by the collection:
-  const uniqueItemDict = await pprops(promiseObj);
+  const uniqueItemDict = await pprops(promiseObj, async (val, loopKey) => {
+    let newVal = null;
+    try {
+      newVal = await method(loopKey);
+    } catch (e) {
+      if (val === null) {
+        throw e;
+      }
+
+      return val;
+    }
+
+    return newVal;
+  }, options);
 
   // now set the requested property field using the fetched items:
   collection.forEach((item) => {
