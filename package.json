@@ -20,5 +20,6 @@
     "eslint-plugin-import": "^2.8.0",
     "tap": "^10.2.0"
   },
-  "keywords": []
+  "keywords": [],
+  "license": "MIT"
 }
